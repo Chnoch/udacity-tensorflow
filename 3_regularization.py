@@ -2,11 +2,9 @@
 # before proceeding further.
 from __future__ import print_function
 
-
 import numpy as np
 import tensorflow as tf
 import pickle
-
 
 pickle_file = 'assets/notMNIST.pickle'
 
@@ -23,15 +21,17 @@ with open(pickle_file, mode='rb') as f:
     print('Validation set', valid_dataset.shape, valid_labels.shape)
     print('Test set', test_dataset.shape, test_labels.shape)
 
-
 image_size = 28
 num_labels = 10
+
 
 def reformat(dataset, labels):
     dataset = dataset.reshape((-1, image_size * image_size)).astype(np.float32)
     # Map 1 to [0.0, 1.0, 0.0 ...], 2 to [0.0, 0.0, 1.0 ...]
-    labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
+    labels = (np.arange(num_labels) == labels[:, None]).astype(np.float32)
     return dataset, labels
+
+
 train_dataset, train_labels = reformat(train_dataset, train_labels)
 valid_dataset, valid_labels = reformat(valid_dataset, valid_labels)
 test_dataset, test_labels = reformat(test_dataset, test_labels)
@@ -44,17 +44,17 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
             / predictions.shape[0])
 
-batch_size =128
-num_hidden_nodes= 1024
+
+batch_size = 128
+num_hidden_nodes = 1024
 num_second_hidden_nodes = 300
 num_third_hidden_nodes = 50
 
-restricted_train_dataset = train_dataset[0:batch_size*3,:]
-restricted_train_labels = train_labels[0:batch_size*3,:]
+restricted_train_dataset = train_dataset[0:batch_size * 3, :]
+restricted_train_labels = train_labels[0:batch_size * 3, :]
 
 graph = tf.Graph()
 with graph.as_default():
-
     # Input data. For the training data, we use a placeholder that will be fed
     # at run time with a training minibatch.
     tf_train_dataset = tf.placeholder(tf.float32,
@@ -74,6 +74,7 @@ with graph.as_default():
     biases_3 = tf.Variable(tf.zeros([num_third_hidden_nodes]))
     biases_4 = tf.Variable(tf.zeros([num_labels]))
 
+
     # Training computation.
     def model(data, train):
         first_layer = tf.matmul(data, weights_1) + biases_1
@@ -83,7 +84,7 @@ with graph.as_default():
         third_layer = tf.matmul(second_relu, weights_3) + biases_3
         third_relu = tf.nn.relu(third_layer)
         fourth_layer = tf.matmul(third_relu, weights_4) + biases_4
-        if (train):
+        if train:
             fourth_layer = tf.nn.dropout(fourth_layer, 0.5)
 
         return fourth_layer
@@ -91,10 +92,12 @@ with graph.as_default():
 
     logits = model(tf_train_dataset, True)
     reg_mult = 1e-3
-    regularization = tf.nn.l2_loss(weights_1) + tf.nn.l2_loss(weights_2) + tf.nn.l2_loss(weights_3) + tf.nn.l2_loss(weights_4)
-    regularization = regularization + tf.nn.l2_loss(biases_1) + tf.nn.l2_loss(biases_2) + tf.nn.l2_loss(biases_3) + tf.nn.l2_loss(biases_4)
+    regularization = tf.nn.l2_loss(weights_1) + tf.nn.l2_loss(weights_2) + tf.nn.l2_loss(weights_3) + tf.nn.l2_loss(
+        weights_4)
+    regularization = regularization + tf.nn.l2_loss(biases_1) + tf.nn.l2_loss(biases_2) + tf.nn.l2_loss(
+        biases_3) + tf.nn.l2_loss(biases_4)
     loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels)) +reg_mult*regularization
+        tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels)) + reg_mult * regularization
 
     # Optimizer.
     global_step = tf.Variable(0)  # count the number of steps taken.
@@ -105,7 +108,6 @@ with graph.as_default():
     train_prediction = tf.nn.softmax(logits)
     valid_prediction = tf.nn.softmax(model(tf_valid_dataset, False))
     test_prediction = tf.nn.softmax(model(tf_test_dataset, False))
-
 
 num_steps = 10001
 
@@ -122,7 +124,7 @@ with tf.Session(graph=graph) as session:
         # Prepare a dictionary telling the session where to feed the minibatch.
         # The key of the dictionary is the placeholder node of the graph to be fed,
         # and the value is the numpy array to feed to it.
-        feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels}
+        feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
         _, l, predictions = session.run(
             [optimizer, loss, train_prediction], feed_dict=feed_dict)
         if (step % 500 == 0):
