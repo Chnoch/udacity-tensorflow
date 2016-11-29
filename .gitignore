@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+/assets/notMNIST_large.tar.gz
+/assets/notMNIST_small.tar.gz
+/assets/notMNIST.pickle
+/udacity-tensorflow.iml
+/.idea/
